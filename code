@@ -92,15 +92,14 @@ function main() {
         } else {
             toastLog("正在搜索能量...");
             sleep(1000);
-            //再次对当前屏幕截图进行判断，查找当前屏幕剩余有能量的好友
-            if (getFriListPoint()) {
-                getFriendEnergy(getFriListPoint());
-            } else {
-                //当前屏幕截图没有好友有能量，则上滑屏幕
+            //当前屏幕截图没有好友有能量，则上滑屏幕
+            if (!getFriListPoint()) {
                 swipe(500, 1500, 500, 300, 500);
                 sleep(1000);
-                //判断是否是结尾
-                ending();
+                //如果已经是结尾，判断是否还有好友的能量为收取
+                if (!getFriListPoint()) {
+                    ending();
+                }
             }
         }
     }
