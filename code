@@ -4,89 +4,105 @@
 launchApp("支付宝");
 sleep(1000);
 
-//直接打开控件
+//点击打开控件
 click("蚂蚁森林");
 sleep(3000);
 
-//请求截图
+//请求屏幕截图
 if (!requestScreenCapture()) {
     toastLog("请求截图失败");
 }
 
 //收取自己的能量
 while (true) {
-    //获取自己的蚂蚁森林能量主页截图
     var myimg = captureScreen();
-    //在截图中寻找能量
     var mypoint = findColor(myimg, "#C3FF60");
-    //如果找到能量
     if (mypoint) {
-        //提示能量的坐标
         toastLog(mypoint.x + "," + mypoint.y);
-        //点击能量坐标
         click(mypoint.x, mypoint.y);
     } else {
         toastLog("你已经没有能量了");
-        //退出循环
         break;
     }
-    //每收取自己一次能量停顿1秒
     sleep(1000);
 }
-//退出循环时停顿1秒
 sleep(2000);
 
-//直接打开查看更多好友
 click("查看更多好友");
 sleep(2000);
 
-//上滑，让第一名保持在屏幕第一位
-swipe(500, 900, 500, 660, 500);
-sleep(1000);
+//判断滑动到了结尾
+function ending() {
+    var endImg = captureScreen();
+    var endPoint = findColor(endImg, "#2EC06E", {
+        region: [1000, 400],
+        threshold: 10
+    });
+    if (endPoint) {
+        toastLog("没有更多了");
+        sleep(1000);
+        back();
+        sleep(1000);
+        back();
+        //退出脚本
+        exit();
+    }
+}
 
-//获取好友能量的函数
-function a() {
+//判断好友列表里有能量的好友
+function getFriListPoint() {
+    var fdimg = captureScreen();
+    var fdpoint = findColor(fdimg, "#ff1da06d", {
+        region: [1020, 190]
+    });
+    //找到有能量的好友，返回 fdpoint，否则 false
+    if (fdpoint) {
+        return fdpoint;
+    } else {
+        return false;
+    }
+}
+
+//收取好友的能量
+function getFriendEnergy(fdpoint) {
+    click(fdpoint.x, fdpoint.y + 10);
+    sleep(2000);
     while (true) {
-        //获取好友列表的截图
-        var fdimg = captureScreen();
-        //截图中寻找有能量的好友，能量还差多少分钟的也被获取到
-        var fdpoint = findColor(fdimg, "#ff1da06d", {
-            region: [1020, 190]
-        });
-        //获取到有能量的好友坐标
-        if (fdpoint) {
-            //点击好友坐标，进入好友主页
-            click(fdpoint.x, fdpoint.y + 10);
-            sleep(2000);
-            while (true) {
-                //好友主页截图
-                var img2 = captureScreen();
-                //好友主页找能量
-                var point2 = findColor(img2, "#C3FF60");
-                if (point2) {
-                    toastLog(point2.x + "," + point2.y);
-                    click(point2.x, point2.y);
-                    sleep(1000);
-                } else {
-                    toastLog("没有能量");
-                    sleep(1000);
-                    //没有能量可收了，返回好友列表
-                    back();
-                    //退出循环
-                    break;
-                }
-            }
-        } else {
-            toastLog("正在搜索能量...");
+        var img2 = captureScreen();
+        var point2 = findColor(img2, "#C3FF60");
+        if (point2) {
+            toastLog(point2.x + "," + point2.y);
+            click(point2.x, point2.y);
             sleep(1000);
+        } else {
+            toastLog("没有能量");
+            sleep(1000);
+            back();
             break;
         }
     }
-    sleep(1000);
-    //上滑
-    swipe(500, 1500, 500, 300, 500);
-    sleep(1000);
-    //回调
-    a();
+
 }
-a();
+
+//主函数
+function main() {
+    while (true) {
+        if (getFriListPoint()) {
+            getFriendEnergy(getFriListPoint());
+        } else {
+            toastLog("正在搜索能量...");
+            sleep(1000);
+            //再次对当前屏幕截图进行判断，查找当前屏幕剩余有能量的好友
+            if (getFriListPoint()) {
+                getFriendEnergy(getFriListPoint());
+            } else {
+                //当前屏幕截图没有好友有能量，则上滑屏幕
+                swipe(500, 1500, 500, 300, 500);
+                sleep(1000);
+                //判断是否是结尾
+                ending();
+            }
+        }
+    }
+}
+main();
